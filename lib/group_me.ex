@@ -1,0 +1,2 @@
+defmodule GroupMe do
+end
