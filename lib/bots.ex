@@ -9,12 +9,14 @@ defmodule GroupMe.Bots do
     # Token should the a USER token, not a Bot ID.
     def create(token, _) when token == nil, do: {:error, "Token is required"}
     def create(token, options) do
-        if !Map.has_key?(options, :name) || Map.has_key?(options, :group_id) do
+        if !Map.has_key?(options, :name) || !Map.has_key?(options, :group_id) do
             # throw
             {:error, "Required params name and/or group_id not found."}
         else
             url = "https://api.groupme.com/v3/bots?token=#{token}"
-            GroupMe.Request.post(url, %{bot: options})
+            case GroupMe.Request.post(url, %{bot: options}) do
+                {:ok, response} -> response.body[:bot]
+                {:error, reason} -> {:error, reason}
         end
         # %HTTPoison.Response{body: "{\"meta\":{\"code\":201},\"response\":{\"bot\":{\"name\":\"New Piker\",\"bot_id\":\"ba712580bd938ba074a7dcc032\",\"group_id\":\"26869951\",\"group_name\":\"pick one test\",\"avatar_url\":null,\"callback_url\":null,\"dm_notification\":false}}}",
         #  headers: [{"Cache-Control", "max-age=0, private, must-revalidate"},
@@ -24,6 +26,13 @@ defmodule GroupMe.Bots do
         #   {"Status", "201 Created"}, {"Strict-Transport-Security", "max-age=31536000"},
         #   {"X-Runtime", "0.025714"}, {"X-Ua-Compatible", "IE=Edge,chrome=1"},
         #   {"Content-Length", "212"}, {"Connection", "keep-alive"}], status_code: 201}
+    end
+
+    def create!(token, options) do
+        case create(token, options) do
+            {:ok, response} -> response
+            {:error, reason} -> throw(reason)
+        end
     end
 
     # Post a Message
@@ -62,8 +71,15 @@ defmodule GroupMe.Bots do
     end
 
     # Destroy
-    def delete() do
-
+    def delete(token, bot_id) do
+        url = "https://api.groupme.com/v3/bots/destroy?token=#{token}"
+        body = %{
+            bot_id: bot_id
+        }
+        case GroupMe.Request.post(url, body) do
+            {:ok, response} -> {:ok, response.body}
+            {:error, reason} -> {:error, reason}
+        end
     end
 
     def bot_id() do
