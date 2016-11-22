@@ -1,15 +1,26 @@
 defmodule GroupMe.Request do
     use HTTPoison.Base
 
-    defp process_response_body(" "), do: " "
+    defp process_response_body(" "), do: nil
     defp process_response_body(body) do
-        # TODO: Check the meta prop and parse it
-        # If its an error then send that back instead.
         IO.inspect body
-        case Poison.decode(body) do
-            {:ok, response} ->
-                transform_response(response)
-            {:error, reason} -> reason
+        Poison.decode!(body)
+    end
+
+    def handle_response(%{body: nil}), do: {:ok, nil}
+    def handle_response(response) do
+        body = response.body
+        case response.body["meta"]["code"] do
+            code when code < 300 ->
+                IO.puts "300"
+                {:ok, body["response"]}
+            code when code < 500 ->
+                IO.puts "500"
+                {:error, body["meta"]}
+            code ->
+                IO.puts "300xxx"
+                # TODO: not sure this is correct
+                {:error, body["meta"]}
         end
     end
 
@@ -21,38 +32,24 @@ defmodule GroupMe.Request do
         body
     end
 
-    defp transform_response(response) do
-        case response["response"] do
-            r when is_list(r) ->
-                Enum.map(r, fn(group) ->
-                    Enum.map(group, fn({k, v}) -> {String.to_atom(k), v} end)
-                end)
-            r when is_map(r) ->
-                IO.puts "its a map!"
-                transform(r)
-            r -> r
-        end
-    end
-
-    defp transform(map) do
-        Enum.map(map, fn({k, v}) ->
-            if is_map(v) do
-                {String.to_atom(k), transform(v)}
-            else
-                {String.to_atom(k), v}
-            end
-        end)
-    end
     def pik_user_auth_token() do
         Application.get_env(:pik, :groupme)[:token]
     end
 
     def bot_id() do
         "8f334ddb3045ac6963614c3c02"
+        "8e31ae73d8914aac573f60e4c3"
     end
 
+    # Pick One Test
     def group_id() do
         "26869951"
+        # "share_url" => "https://app.groupme.com/join_group/26869951/Ftt6Vd",
+    end
+
+    # Pick One Dev
+    def group_id() do
+        "26737213"
     end
 
     def access_token() do

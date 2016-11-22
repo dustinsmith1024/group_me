@@ -10,22 +10,14 @@ defmodule GroupMe.Bots do
     def create(token, _) when token == nil, do: {:error, "Token is required"}
     def create(token, options) do
         if !Map.has_key?(options, :name) || !Map.has_key?(options, :group_id) do
-            # throw
             {:error, "Required params name and/or group_id not found."}
         else
             url = "https://api.groupme.com/v3/bots?token=#{token}"
             case GroupMe.Request.post(url, %{bot: options}) do
-                {:ok, response} -> response.body[:bot]
+                {:ok, response} -> GroupMe.Request.handle_response(response)
                 {:error, reason} -> {:error, reason}
+            end
         end
-        # %HTTPoison.Response{body: "{\"meta\":{\"code\":201},\"response\":{\"bot\":{\"name\":\"New Piker\",\"bot_id\":\"ba712580bd938ba074a7dcc032\",\"group_id\":\"26869951\",\"group_name\":\"pick one test\",\"avatar_url\":null,\"callback_url\":null,\"dm_notification\":false}}}",
-        #  headers: [{"Cache-Control", "max-age=0, private, must-revalidate"},
-        #   {"Content-Type", "application/json; charset=utf-8"},
-        #   {"Date", "Sun, 20 Nov 2016 18:33:12 GMT"},
-        #   {"Etag", "\"db78ee084addda2b71c0a4ebeb124fd0\""}, {"Server", "nginx/1.10.2"},
-        #   {"Status", "201 Created"}, {"Strict-Transport-Security", "max-age=31536000"},
-        #   {"X-Runtime", "0.025714"}, {"X-Ua-Compatible", "IE=Edge,chrome=1"},
-        #   {"Content-Length", "212"}, {"Connection", "keep-alive"}], status_code: 201}
     end
 
     def create!(token, options) do
@@ -37,20 +29,20 @@ defmodule GroupMe.Bots do
 
     # Post a Message
     # We want to send bot_id in
-    def post_message(bot_id, message) when bot_id==nil, do: {:error, "Bot ID cannot be nil."}
+    def post_message(bot_id, _) when bot_id==nil, do: {:error, "Bot ID cannot be nil."}
+    def post_message(_, message) when message==nil, do: {:error, "Message cannot be nil."}
     def post_message(bot_id, message) do
         url = "https://api.groupme.com/v3/bots/post"
 
-        IO.inspect message
         body = %{
             text: message,
             bot_id: bot_id
         }
 
-        {status, resp} = GroupMe.Request.post(url, body)
-        IO.inspect resp
-        IO.inspect status
-        resp
+        case GroupMe.Request.post(url, body) do
+            {:ok, response} -> GroupMe.Request.handle_response(response)
+            {:error, reason} -> {:error, reason}
+        end
     end
 
     # Index
@@ -58,7 +50,8 @@ defmodule GroupMe.Bots do
     def list(token) do
         url = "https://api.groupme.com/v3/bots?token=#{token}"
         case GroupMe.Request.get(url) do
-            {:ok, response} -> {:ok, response.body}
+            {:ok, response} ->
+                GroupMe.Request.handle_response(response)
             {:error, reason} -> {:error, reason}
         end
     end
@@ -77,8 +70,15 @@ defmodule GroupMe.Bots do
             bot_id: bot_id
         }
         case GroupMe.Request.post(url, body) do
-            {:ok, response} -> {:ok, response.body}
+            {:ok, response} -> GroupMe.Request.handle_response(response)
             {:error, reason} -> {:error, reason}
+        end
+    end
+
+    def delete!(token, bot_id) do
+        case delete(token, bot_id) do
+            {:ok, response} -> response
+            {:error, reason} -> throw(reason)
         end
     end
 
@@ -86,5 +86,5 @@ defmodule GroupMe.Bots do
         "8f334ddb3045ac6963614c3c02"
     end
 
-    Application.get_env(:pik, :groupme)[:token]
+    # Application.get_env(:pik, :groupme)[:token]
 end
