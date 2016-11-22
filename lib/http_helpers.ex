@@ -7,6 +7,19 @@ defmodule GroupMe.Request do
         Poison.decode!(body)
     end
 
+    defp process_request_headers([]), do: Enum.into(default_headers, [])
+    defp process_request_headers(headers) when is_map(headers) do
+        Enum.into(headers, [])
+    end
+
+    defp default_headers do
+        %{
+            "Content-Type": "application/json",
+        }
+    end
+
+
+
     def handle_response(%{body: nil}), do: {:ok, nil}
     def handle_response(response) do
         body = response.body
@@ -25,7 +38,10 @@ defmodule GroupMe.Request do
     end
 
     defp process_request_body(body) when is_map(body) do
-        Poison.encode!(body)
+        IO.inspect body
+        b = Poison.encode!(body)
+        IO.inspect b
+        b
     end
 
     defp process_request_body(body) do
@@ -41,15 +57,10 @@ defmodule GroupMe.Request do
         "8e31ae73d8914aac573f60e4c3"
     end
 
-    # Pick One Test
     def group_id() do
-        "26869951"
+        "26869951" # Pick One Test
+        "26737213" # Pick One Dev
         # "share_url" => "https://app.groupme.com/join_group/26869951/Ftt6Vd",
-    end
-
-    # Pick One Dev
-    def group_id() do
-        "26737213"
     end
 
     def access_token() do

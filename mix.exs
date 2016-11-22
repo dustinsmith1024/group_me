@@ -29,6 +29,11 @@ defmodule GroupMe.Mixfile do
   defp deps do
     [{:poison, "2.2.0"},
      {:hackney, "1.6.1"},
+     {:plug, "1.2.2"},
+     {:socket, "~> 0.3"},
+     {:gun, "~> 1.0.0-pre.1"},
+     {:websocket_client, "~> 1.1.0"},
+     {:uuid, "1.1.5"},
      {:httpoison, "0.9.2"}]
   end
 end
