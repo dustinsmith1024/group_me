@@ -1,17 +1,21 @@
-# You might not always need event handles?
-# Socket.start()
-# Socket.direct(fn(data) ->
-#     ...handle data
-# end)
-# Socket.listen({:direct, fn ->
-#     ...handle direct message
-# end)
+# Load up the Socket and start listening for messages.
 #
-# iex(1)> GroupMe.Socket.open("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", "44040609", fn(d) -> IO.inspect(hd(d)["data"]["alert"]) end)
+# GroupMe.Socket.connect_and_listen("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", "44040609", fn(d) -> IO.inspect(hd(d)["data"]["alert"]) end)
+#
+# You will probably want this in a process of some sort.
+#
+# Task.async(fn()->  GroupMe.Socket.connect_and_listen("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", "44040609", fn(d) -> IO.inspect(hd(d)["data"]["alert"]) end)    end)
 defmodule GroupMe.Socket do
     require Logger
 
-    def open(access_token, user_id, on_data) do
+    def connect_and_listen(access_token, user_id, on_data) do
+        {socket, response} = handshake()
+        {socket, response} = subscribe(socket, response["clientId"], access_token, user_id)
+        # blocks
+        listen(socket, on_data)
+    end
+
+    def handshake() do
         socket = Socket.Web.connect!("push.groupme.com", path: "/faye")
 
         data = %{
@@ -22,24 +26,16 @@ defmodule GroupMe.Socket do
 
         Socket.Web.send!(socket, {:text, Poison.encode!(data)})
 
-        # Connect
-        res = case Socket.Web.recv!(socket) do
+        response = case Socket.Web.recv!(socket) do
         {:text, data} ->
-            # process data
             Logger.debug "handshake #{data}"
-            d = Poison.decode!(data)
-            hd(d)
-        {:ping, _ } ->
-            # TODO Do we need a ping here? Or will that not happen until later
-            Socket.Web.send!(socket, {:pong, ""})
+            Poison.decode!(data)
+            |> hd
         end
 
-        subscribe(socket, res["clientId"], access_token, user_id)
-        listen(socket, on_data)
+        {socket, response}
     end
 
-    # "sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1"
-    #  <> "44040609"
     def subscribe(socket, client_id, access_token, user_id) do
         data = %{
             channel: "/meta/subscribe",
@@ -54,30 +50,30 @@ defmodule GroupMe.Socket do
         Socket.Web.send!(socket, {:text, Poison.encode!(data)})
 
         # Subscribe
-        case Socket.Web.recv!(socket) do
+        response = case Socket.Web.recv!(socket) do
         {:text, data} ->
             # process data
             Logger.debug "subscribed: #{data}"
-            d = Poison.decode!(data)
-            d
-        {:ping, _ } ->
-            Socket.Web.send!(socket, {:pong, ""})
+            Poison.decode!(data)
+            |> hd
         end
+
+        {socket, response}
     end
 
     # TODO: Extract this out somehow?
-    # How do listen to multiple users?
-    # Move this to a GenSomething and then spawn one per user.
-    # We might not even need more than one because 1 can listen to all groups.
     def listen(socket, on_data) do
         case Socket.Web.recv!(socket) do
             {:text, data} ->
                 # process data
                 Logger.debug "received data: #{data}"
                 d = Poison.decode!(data)
-                on_data.(d)
+                # Some reason we get PINGs here as well.
+                if hd(d)["data"]["type"] != "ping" do
+                    on_data.(d)
+                end
             {:ping, _ } ->
-                Logger.debug "PING"
+                # Logger.debug "PING"
                 Socket.Web.send!(socket, {:pong, ""})
         end
 
