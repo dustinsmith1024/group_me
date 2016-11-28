@@ -1,6 +1,17 @@
-# Reverse engineered from here.
+# You might not always need event handles?
+# Socket.start()
+# Socket.direct(fn(data) ->
+#     ...handle data
+# end)
+# Socket.listen({:direct, fn ->
+#     ...handle direct message
+# end)
+#
+# iex(1)> GroupMe.Socket.open("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", "44040609", fn(d) -> IO.inspect(hd(d)["data"]["alert"]) end)
 defmodule GroupMe.Socket do
-    def open(access_token, user_id) do
+    require Logger
+
+    def open(access_token, user_id, on_data) do
         socket = Socket.Web.connect!("push.groupme.com", path: "/faye")
 
         data = %{
@@ -9,27 +20,22 @@ defmodule GroupMe.Socket do
             supportedConnectionTypes: ["websocket"]
         };
 
-        # this.send([data]);
-        r = Socket.Web.send!(socket, {:text, Poison.encode!(data)})
-        IO.inspect r
+        Socket.Web.send!(socket, {:text, Poison.encode!(data)})
 
         # Connect
         res = case Socket.Web.recv!(socket) do
         {:text, data} ->
             # process data
-            IO.puts "got some data back"
+            Logger.debug "handshake #{data}"
             d = Poison.decode!(data)
-            IO.inspect d
             hd(d)
         {:ping, _ } ->
             # TODO Do we need a ping here? Or will that not happen until later
-            IO.puts "ping!"
             Socket.Web.send!(socket, {:pong, ""})
         end
 
         subscribe(socket, res["clientId"], access_token, user_id)
-        listen(socket)
-
+        listen(socket, on_data)
     end
 
     # "sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1"
@@ -45,39 +51,36 @@ defmodule GroupMe.Socket do
             }
         };
 
-        r = Socket.Web.send!(socket, {:text, Poison.encode!(data)})
-        IO.inspect r
+        Socket.Web.send!(socket, {:text, Poison.encode!(data)})
 
         # Subscribe
         case Socket.Web.recv!(socket) do
         {:text, data} ->
             # process data
-            IO.puts "got some data back for subscribing"
+            Logger.debug "subscribed: #{data}"
             d = Poison.decode!(data)
-            IO.inspect d
             d
         {:ping, _ } ->
-            IO.puts "ping!"
             Socket.Web.send!(socket, {:pong, ""})
         end
     end
+
     # TODO: Extract this out somehow?
     # How do listen to multiple users?
     # Move this to a GenSomething and then spawn one per user.
     # We might not even need more than one because 1 can listen to all groups.
-    def listen(socket) do
+    def listen(socket, on_data) do
         case Socket.Web.recv!(socket) do
             {:text, data} ->
                 # process data
-                IO.puts "got some data back for subscribing"
+                Logger.debug "received data: #{data}"
                 d = Poison.decode!(data)
-                IO.inspect d
-                d
+                on_data.(d)
             {:ping, _ } ->
-                IO.puts "ping!"
+                Logger.debug "PING"
                 Socket.Web.send!(socket, {:pong, ""})
         end
 
-        listen(socket)
+        listen(socket, on_data)
     end
 end
