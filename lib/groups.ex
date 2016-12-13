@@ -37,8 +37,8 @@ defmodule GroupMe.Groups do
     end
 
     # Show
-    def find(token, group_id) when token == nil, do: {:error, "Token is required"}
-    def find(token, group_id) when group_id == nil, do: {:error, "Group ID is required"}
+    def find(token, _) when token == nil, do: {:error, "Token is required"}
+    def find(_, group_id) when group_id == nil, do: {:error, "Group ID is required"}
     def find(token, group_id) do
         url = "https://api.groupme.com/v3/groups/#{group_id}?token=#{token}"
         case GroupMe.Request.get(url) do

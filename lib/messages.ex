@@ -21,7 +21,6 @@ defmodule GroupMe.Messages do
     def list(token, group_id, options) do
         query = Query.encode(Map.put(options, "token", token))
         url = "https://api.groupme.com/v3/groups/#{group_id}/messages?#{query}"
-        IO.puts url
         case GroupMe.Request.get(url) do
             {:ok, response} ->
                 GroupMe.Request.handle_response(response)
@@ -59,7 +58,7 @@ defmodule GroupMe.Messages do
     # placeholder (string) — “☃” required
     # charmap (array) — “[{pack_id},{offset}]” required
     # POST /groups/:group_id/messages
-    # GroupMe.Messages.create("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", "26869951", %{text: "this better work..."})
+    # GroupMe.Messages.create("<token>", "<group_id>", %{text: "this should work!"})
     def create(nil, _, _), do: {:error, "Token is required"}
     def create(_, nil, _), do: {:error, "Group ID is required"}
     def create(token, group_id, message) do

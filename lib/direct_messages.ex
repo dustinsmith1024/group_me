@@ -18,10 +18,10 @@ defmodule GroupMe.DirectMessages do
     # since_id
     # string — Returns 20 messages created after the given message ID
     # List groups, grab an ID
-    # GroupMe.Groups.list("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1")
-    # GroupMe.DirectMessages.list("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", %{other_user_id: "43534243"})
-    def list(nil, _), do: {:error, "Token is required"}
+    # GroupMe.Groups.list("<token>")
+    # GroupMe.DirectMessages.list("<token>", %{other_user_id: "<user_id>"})
     def list(token), do: list(token, %{})
+    def list(nil, _), do: {:error, "Token is required"}
     def list(token, options) do
         if !Map.has_key?(options, :other_user_id) do
             {:error, "other_user_id is required in message"}

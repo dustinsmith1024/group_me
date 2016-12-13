@@ -1,6 +1,6 @@
 defmodule GroupMe.Likes do
-#     LIKES
-# Create
-# Destroy
-
+    # TODO: Implement...
+    #     LIKES
+    # Create
+    # Destroy
 end

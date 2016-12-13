@@ -1,5 +1,5 @@
 defmodule GroupMe.Chats do
-#     CHATS
-# Index
-
+    # TODO: Implement...
+    #     CHATS
+    # Index
 end

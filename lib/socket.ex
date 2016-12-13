@@ -1,17 +1,18 @@
 # Load up the Socket and start listening for messages.
-#
-# GroupMe.Socket.connect_and_listen("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", "44040609", fn(d) -> IO.inspect(hd(d)["data"]["alert"]) end)
-#
 # You will probably want this in a process of some sort.
 #
-# Task.async(fn()->  GroupMe.Socket.connect_and_listen("sIvJQp3JTuBLaoAly2PRhQpq7EKsaq8iHwEP5xU1", "44040609", fn(d) -> IO.inspect(hd(d)["data"]["alert"]) end)    end)
+# Task.async(fn()->
+#    GroupMe.Socket.connect_and_listen("<token>", "<user_id>", fn(d) ->
+#        IO.inspect(hd(d)["data"]["alert"])
+#    end)
+# end)
 defmodule GroupMe.Socket do
     require Logger
 
     def connect_and_listen(access_token, user_id, on_data) do
         {socket, response} = handshake()
-        {socket, response} = subscribe(socket, response["clientId"], access_token, user_id)
-        # blocks
+        {socket, _} = subscribe(socket, response["clientId"], access_token, user_id)
+        # blocks, so do this in a task or something.
         listen(socket, on_data)
     end
 
@@ -61,7 +62,7 @@ defmodule GroupMe.Socket do
         {socket, response}
     end
 
-    # TODO: Extract this out somehow?
+    # Pass in your data handler in on_data
     def listen(socket, on_data) do
         case Socket.Web.recv!(socket) do
             {:text, data} ->

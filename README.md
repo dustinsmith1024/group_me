@@ -1,6 +1,12 @@
 # GroupMe
 
-**TODO: Add description**
+An Elixir library for working with the GroupMe API.
+Supports basic HTTP client and the Socket/Faye streaming protocols.
+
+## Usage
+
+Check the code for now.
+The Socket handler is the best for consuming messages, and the messages module is best for sending them.
 
 ## Installation
 

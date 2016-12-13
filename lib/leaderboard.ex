@@ -1,7 +1,7 @@
 defmodule GroupMe.Leaderboard do
-#     LEADERBOARD
-# Index
-# My Likes
-# My Hits
-
+    # TODO: Implement...
+    #     LEADERBOARD
+    # Index
+    # My Likes
+    # My Hits
 end

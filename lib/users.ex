@@ -1,6 +1,6 @@
 defmodule GroupMe.Users do
-#     USERS
-# Me
+    #     USERS
+    #       Me
     def find(token) when token == nil, do: {:error, "Token is required"}
     def find(token) do
         url = "https://api.groupme.com/v3/users/me?token=#{token}"

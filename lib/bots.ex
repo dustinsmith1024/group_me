@@ -81,10 +81,4 @@ defmodule GroupMe.Bots do
             {:error, reason} -> throw(reason)
         end
     end
-
-    def bot_id() do
-        "8f334ddb3045ac6963614c3c02"
-    end
-
-    # Application.get_env(:pik, :groupme)[:token]
 end
