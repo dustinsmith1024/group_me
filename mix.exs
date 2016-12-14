@@ -27,7 +27,7 @@ defmodule GroupMe.Mixfile do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
       # This override is in place because of a bug in hackney SSL handshakes
-      {:hackney, "1.6.1", override: true},
+      {:hackney, "1.6.1"},
       {:httpoison, ">= 0.9.2"},
       {:plug, "~> 1.1"},
       {:poison, "~> 2.2.0"},
