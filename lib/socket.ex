@@ -1,14 +1,36 @@
-# Load up the Socket and start listening for messages.
-# You will probably want this in a process of some sort.
-#
-# Task.async(fn()->
-#    GroupMe.Socket.connect_and_listen("<token>", "<user_id>", fn(d) ->
-#        IO.inspect(hd(d)["data"]["alert"])
-#    end)
-# end)
 defmodule GroupMe.Socket do
+    @moduledoc """
+    Load up the Socket and start listening for messages.
+
+    [Group Me Push Tutorial](https://dev.groupme.com/tutorials/push)
+
+    GroupMe uses the Ruby Faye implementation of Sockets.
+    (https://github.com/faye/faye-websocket-ruby)[https://github.com/faye/faye-websocket-ruby]
+
+    You will probably want this in a process or task of some sort.
+
+    ## Example:
+
+        Task.async(fn()->
+            GroupMe.Socket.connect_and_listen("<token>", "<user_id>", fn(d) ->
+                IO.inspect(hd(d)["data"]["alert"])
+            end)
+        end)
+    """
     require Logger
 
+
+    @doc """
+    Handle the handshake, subscription, and blocks while waiting for new messages.
+
+    Pass a callback `on_data` to take actions based on the message data.
+
+    ## Example:
+
+        GroupMe.Socket.connect_and_listen("<token>", "<user_id>", fn(d) ->
+            IO.inspect(hd(d)["data"]["alert"])
+        end)
+    """
     def connect_and_listen(access_token, user_id, on_data) do
         {socket, response} = handshake()
         {socket, _} = subscribe(socket, response["clientId"], access_token, user_id)
@@ -16,6 +38,9 @@ defmodule GroupMe.Socket do
         listen(socket, on_data)
     end
 
+    @doc """
+    Start the connection process.
+    """
     def handshake() do
         socket = Socket.Web.connect!("push.groupme.com", path: "/faye")
 
@@ -37,6 +62,9 @@ defmodule GroupMe.Socket do
         {socket, response}
     end
 
+    @doc """
+    Subscribe with your `access_token` and `user_id` using the `client_id` from `handshake()` to authenticate.
+    """
     def subscribe(socket, client_id, access_token, user_id) do
         data = %{
             channel: "/meta/subscribe",
@@ -62,7 +90,9 @@ defmodule GroupMe.Socket do
         {socket, response}
     end
 
-    # Pass in your data handler in on_data
+    @doc """
+    Listen for messages. This blocks and calls the `on_data` callback when a message is received.
+    """
     def listen(socket, on_data) do
         case Socket.Web.recv!(socket) do
             {:text, data} ->

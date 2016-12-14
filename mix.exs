@@ -3,37 +3,44 @@ defmodule GroupMe.Mixfile do
 
   def project do
     [app: :group_me,
-     version: "0.1.0",
+     version: "0.1.1",
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps()]
+     deps: deps(),
+     description: description(),
+     package: package()
+    ]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger, :httpoison]]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type "mix help deps" for more examples and options
+  defp description do
+    """
+    A library for interacting with the GroupMe API.
+    """
+  end
+
   defp deps do
-    [{:poison, "2.2.0"},
-     {:hackney, "1.6.1"},
-     {:plug, "1.2.2"},
-     {:socket, "~> 0.3"},
-     {:gun, "~> 1.0.0-pre.1"},
-     {:websocket_client, "~> 1.1.0"},
-     {:uuid, "1.1.5"},
-     {:httpoison, "0.9.2"}]
+    [
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      # This override is in place because of a bug in hackney SSL handshakes
+      {:hackney, "1.6.1", override: true},
+      {:httpoison, ">= 0.9.2"},
+      {:plug, "~> 1.1"},
+      {:poison, "~> 2.2.0"},
+      {:socket, "~> 0.3"},
+      {:uuid, "~> 1.1.0"}
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Dustin Smith"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/dustinsmith1024/group_me"}
+    ]
   end
 end
